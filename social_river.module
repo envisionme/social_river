@@ -11,7 +11,168 @@
  * Implements hook_perm().
  */
 function social_river_perm() {
-  return array('administer social river', 'view social river');
+  return array('administer social river', 'view social river', 'set own social river settings');
+}
+
+function social_river_menu() {
+  $items['user/%user/social_river'] = array(
+    'title' => t('Social River Configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('social_river_user_settings_form'),
+    'access arguments' => array('set own social river settings'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/*
+ *
+ */
+function social_river_user_settings_form(){
+  global $user;
+  _social_river_add_scripts();
+
+  $form = array();
+
+  $form = array();
+  $form['#tree'] = TRUE;
+
+  $form['social_river_user_settings'] = array(
+    '#type' => 'item',
+    '#value' => t('Provide usernames for each of the services that you wish to appear on your social river.'),
+  );
+
+  /*
+   * Array of services we allow, key = service name  value = help link (where necessary otherwise blank)
+   */
+  $services = array(
+    'Bitbucket' => '',
+    'Bitly' => '',
+    'Blogger' => '',
+    'Dailymotion' => '',
+    'Delicious' => '',
+    'Deviantart' => '',
+    'Dribbble' => '',
+    'Flickr' => 'http://idgettr.com/',
+    'Foomark' => '',
+    'Formspring' => '',
+    'Forrst' => '',
+    'Foursquare' => 'http://www.cl.ly/7TEJ',
+    'Github' => '',
+    'Googlereader' => 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion',
+    'Instapaper' => '',
+    'Iusethis' => '',
+    'Lastfm' => '',
+    'Mlkshk' => '',
+    'Picplz' => '',
+    'Pinboard' => '',
+    'Posterous' => '',
+    'Reddit' => '',
+    'Slideshare' => '',
+    'Snipplr' => '',
+    'Stackoverflow' => 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png',
+    'Tumblr' => '',
+    'Twitter' => '',
+    'Vimeo' => '',
+    'Wordpress' => '',
+    'Youtube' => '',
+  );
+
+  foreach($services as $service=>$help_link){
+
+    $user_value = _social_river_get_user_service($service);
+    if($user_value){
+        $default = $user_value['service_username'];
+    }else{
+        $default = '';
+    }
+
+    $form['social_river_user_settings'][strtolower($service)] = array(
+		'#title' => t($service),
+        '#type'	=> 'textfield',
+		'#size' => 30,
+		'#maxlength' => 255,
+		'#default_value' => $default,
+        '#prefix' => '<div><div class="social-river-icon lifestream-'.strtolower($service).'"></div>',
+        '#suffix' => '</div>',
+    );
+
+    if(!empty($help_link)){
+        $help_link_options = array('attributes'=>array('title'=>t('Find your @service id or username',array('@service'=>$service)), 'target'=>'_blank', 'class'=>'ir'));
+        $form['social_river_user_settings'][strtolower($service)]['#description'] = l('?',$help_link,$help_link_options);
+    }
+  }
+
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => 'submit',
+    '#weight' => 10,
+  );
+    
+  return $form;
+}
+
+/**
+* Submit handler function for adminsettings form
+*/
+function social_river_user_settings_form_submit($form, &$form_state) {
+  global $user;
+
+  //empty user settings in db
+   _social_river_empty_user_service($user->uid);
+
+  $services = $form_state['values']['social_river_user_settings'];
+  foreach($services as $service=>$service_username){
+      _social_river_save_service($service,$service_username);
+  }
+  drupal_set_message (t('Data has been saved.'));
+}
+
+
+/**
+* delete a wall!
+*/
+function _social_river_delete_service($service) {
+  global $user;
+  db_query('DELETE FROM {social_river} WHERE uid=%d and service_name ="%s"', $user->uid, $service);
+}
+
+/**
+* Save a wall!
+*/
+function _social_river_save_service($service,$service_username,$data='') {
+  global $user;
+    
+  if (!empty($service) && !empty($service_username)) {
+    db_query('INSERT INTO {social_river} SET uid=%d, service_name="%s", service_username="%s", data="%s"',
+      $user->uid,
+      $service,
+      $service_username,
+      serialize($data)
+    );
+  }
+    
+}
+
+/**
+* Delete all user service settings
+*/
+function _social_river_empty_user_service($uid) {
+    db_query('DELETE FROM {social_river} WHERE uid=%d', $uid);
+}
+
+/**
+* Fetch user setting for a particular service
+*/
+function _social_river_get_user_service($service) {
+    global $user;
+    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $uid, $service);
+    if($row = db_fetch_array($result)) {
+        return $row;
+    } else {
+        return false;
+    }
 }
 
 
@@ -21,6 +182,7 @@ function social_river_perm() {
 function _social_river_add_scripts() {
   drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');
   drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.timeago.js');
+  drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
 }
 
 /**
@@ -31,9 +193,9 @@ function _social_river_get_river_code($uid) {
   $output = '';
   if(!user_access('view social river')) return $output;
 
-  drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
 
-  $output .= "<link href=\"".drupal_get_path('module', 'social_river')."/css/lifestream.css\" rel=\"stylesheet\" type=\"text/css\"><div id=\"social_river_".$uid."\">&nbsp;</div><script type=\"text/javascript\">
+
+  $output .= "<div id=\"social_river_".$uid."\">&nbsp;</div><script type=\"text/javascript\">
     (function(){
       var count = 0,
       list = [
