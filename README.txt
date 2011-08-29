@@ -1,5 +1,12 @@
-*** TODO ***
+Not production ready
 
+*** TODO ***
+Add hook_block
+Add admin settings
+
+*** Done ***
+User settings tab
+User settings form and handler
 
 
 Requirements:
