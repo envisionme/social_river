@@ -29,7 +29,7 @@ function social_river_menu() {
 /*
  *
  */
-function social_river_user_settings_form(){
+function social_river_user_settings_form() {
   global $user;
   _social_river_add_scripts();
 
@@ -79,28 +79,29 @@ function social_river_user_settings_form(){
     'Youtube' => '',
   );
 
-  foreach($services as $service=>$help_link){
+  foreach ($services as $service => $help_link) {
 
     $user_value = _social_river_get_user_service($service);
-    if($user_value){
+    if ($user_value) {
         $default = $user_value['service_username'];
-    }else{
+    }
+    else {
         $default = '';
     }
 
     $form['social_river_user_settings'][strtolower($service)] = array(
-		'#title' => t($service),
-        '#type'	=> 'textfield',
-		'#size' => 30,
-		'#maxlength' => 255,
-		'#default_value' => $default,
-        '#prefix' => '<div><div class="social-river-icon lifestream-'.strtolower($service).'"></div>',
-        '#suffix' => '</div>',
+      '#title' => check_plain($service), //check_plain to satisy coder
+      '#type' => 'textfield',
+      '#size' => 30,
+      '#maxlength' => 255,
+      '#default_value' => $default,
+      '#prefix' => '<div><div class="social-river-icon lifestream-' . strtolower($service) . '"></div>',
+      '#suffix' => '</div>',
     );
 
-    if(!empty($help_link)){
-        $help_link_options = array('attributes'=>array('title'=>t('Find your @service id or username',array('@service'=>$service)), 'target'=>'_blank', 'class'=>'ir'));
-        $form['social_river_user_settings'][strtolower($service)]['#description'] = l('?',$help_link,$help_link_options);
+    if (!empty($help_link)) {
+        $help_link_options = array('attributes' => array('title' => t('Find your @service id or username', array('@service' => $service)), 'target' => '_blank', 'class' => 'ir'));
+        $form['social_river_user_settings'][strtolower($service)]['#description'] = l('?', $help_link, $help_link_options);
     }
   }
 
@@ -123,10 +124,10 @@ function social_river_user_settings_form_submit($form, &$form_state) {
    _social_river_empty_user_service($user->uid);
 
   $services = $form_state['values']['social_river_user_settings'];
-  foreach($services as $service=>$service_username){
-      _social_river_save_service($service,$service_username);
+  foreach ($services as $service => $service_username) {
+      _social_river_save_service($service, $service_username);
   }
-  drupal_set_message (t('Data has been saved.'));
+  drupal_set_message(t('Data has been saved.'));
 }
 
 
@@ -141,7 +142,7 @@ function _social_river_delete_service($service) {
 /**
 * Save a wall!
 */
-function _social_river_save_service($service,$service_username,$data='') {
+function _social_river_save_service($service, $service_username, $data='') {
   global $user;
     
   if (!empty($service) && !empty($service_username)) {
@@ -167,11 +168,12 @@ function _social_river_empty_user_service($uid) {
 */
 function _social_river_get_user_service($service) {
     global $user;
-    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $uid, $service);
-    if($row = db_fetch_array($result)) {
+    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $user->uid, $service);
+    if ($row = db_fetch_array($result)) {
         return $row;
-    } else {
-        return false;
+    }
+    else {
+        return FALSE;
     }
 }
 
@@ -189,13 +191,12 @@ function _social_river_add_scripts() {
 * Return code of a wall
 */
 function _social_river_get_river_code($uid) {
-
   $output = '';
-  if(!user_access('view social river')) return $output;
+  if (!user_access('view social river')) return $output;
 
 
 
-  $output .= "<div id=\"social_river_".$uid."\">&nbsp;</div><script type=\"text/javascript\">
+  $output .= "<div id=\"social_river_" . $uid . "\">&nbsp;</div><script type=\"text/javascript\">
     (function(){
       var count = 0,
       list = [
@@ -242,19 +243,19 @@ function _social_river_get_river_code($uid) {
               + ':' + pad(Math.abs(offset) % 60, 2);
       };
 
-      $('#social_river_".$uid."').lifestream({
+      $('#social_river_" . $uid . "').lifestream({
         limit: 400,
         list: list,
         feedloaded: function(){
           count++;
           // Check if all the feeds have been loaded
           if( count === list.length ){
-            $('#social_river_".$uid." li').each(function(){
+            $('#social_river_" . $uid . " li').each(function(){
               var element = $(this),
                   date = new Date(element.data('time'));
               element.append(' <abbr class=\"timeago\" title=\"' + date.toISO8601(date) + '\">' + date + \"</abbr>\");
             })
-            $('#social_river_".$uid." .timeago').timeago();
+            $('#social_river_" . $uid . " .timeago').timeago();
           }
         }
       });
