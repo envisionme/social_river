@@ -11,7 +11,7 @@
  * Implements hook_perm().
  */
 function social_river_perm() {
-  return array('administer social river', 'view social river', 'set own social river settings');
+  return array('administer social river', 'view own social river', 'view all social rivers', 'set own social river settings');
 }
 
 function social_river_menu() {
@@ -203,13 +203,44 @@ function _social_river_add_scripts() {
   drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
 }
 
+
+
+/**
+* Implements hook_block
+*/
+function social_river_block($op='list', $delta=0, $edit=array()) {
+  global $user;
+
+  switch ($op) {
+    case 'list':
+
+      $blocks[0]['info'] = t('Social River');
+
+      return $blocks;
+    case 'view':
+        _social_river_add_scripts();
+        //Ivan I checked the user_relationships extras module and got get_uid_from_url()
+        //hoping that this is the way you are making this bl0ck space aware?     
+        //$river = _social_river_get_river_code(get_uid_from_url());
+        //for testing i am just using the current user
+        $river = _social_river_get_river_code($user->uid);
+        $block['subject'] = FALSE;
+        $block['content'] = $river;
+
+        return $block;
+  }
+}
+
 /**
 * Return code of a wall
 */
 function _social_river_get_river_code($uid) {
+  global $user;
 
   $output = '';
-  if (!user_access('view social river')) return $output;
+  if ( (!user_access('view own social river') && !user_access('view all social rivers') ) ||
+       (user_access('view own social river') && $uid != $user->uid )
+  ) return $output;
 
   $services = _social_river_get_user_services();
 
