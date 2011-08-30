@@ -177,6 +177,22 @@ function _social_river_get_user_service($service) {
     }
 }
 
+/**
+* Fetch all user services
+*/
+function _social_river_get_user_services() {
+    global $user;
+
+    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d', $user->uid);
+
+    $services = array();
+    while ($row = db_fetch_array($result)) {
+        $services[$row['service_name']] = $row;
+    }
+
+    return $services;
+}
+
 
 /**
 * Add CSS and JS Files needed for displaying the river
@@ -191,37 +207,25 @@ function _social_river_add_scripts() {
 * Return code of a wall
 */
 function _social_river_get_river_code($uid) {
+
   $output = '';
   if (!user_access('view social river')) return $output;
 
+  $services = _social_river_get_user_services();
 
+  //Create js services list
+  $js_service_list = array();
+  foreach($services as $service){
+    if(!empty($service['service_name']) && !empty($service['service_username'])) {
+      $js_service_list[] = "{ service: '" . check_plain($service['service_name']) . "', user: '" . check_plain($service['service_username']) . "' }";
+    }
+  }
 
-  $output .= "<div id=\"social_river_" . $uid . "\">&nbsp;</div><script type=\"text/javascript\">
+  if(!empty($js_service_list)) {
+    $output .= "<div id=\"social_river_" . $uid . "\">&nbsp;</div><script type=\"text/javascript\">
     (function(){
       var count = 0,
-      list = [
-        {
-          service: 'delicious',
-          user: 'denbuzze'
-        },
-        {
-          service: 'github',
-          user: 'christianv'
-        },
-        // Run javascript:alert(userid); when you're logged in at stackoverflow
-        {
-          service: 'stackoverflow',
-          user: '117193'
-        },
-        {
-          service: 'tumblr',
-          user: 'hiromitz'
-        },
-        {
-          service: 'twitter',
-          user: 'jq_lifestream'
-        }
-      ];
+      list = [  " . implode(",",$js_service_list) .  "  ];
 
       Date.prototype.toISO8601 = function(date) {
           var pad = function (amount, width) {
@@ -241,7 +245,7 @@ function _social_river_get_river_code($uid) {
               + (offset > 0 ? '-' : '+')
               + pad(Math.floor(Math.abs(offset) / 60), 2)
               + ':' + pad(Math.abs(offset) % 60, 2);
-      };
+        };
 
       $('#social_river_" . $uid . "').lifestream({
         limit: 400,
@@ -259,9 +263,12 @@ function _social_river_get_river_code($uid) {
           }
         }
       });
-      
-    })();
-  </script>";
 
-  return $output;
+    })();
+    </script>";
+    return $output;
+  }
+
+  return '';
+
 }
