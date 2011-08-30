@@ -246,17 +246,17 @@ function _social_river_get_river_code($uid) {
 
   //Create js services list
   $js_service_list = array();
-  foreach($services as $service){
-    if(!empty($service['service_name']) && !empty($service['service_username'])) {
+  foreach ($services as $service) {
+    if (!empty($service['service_name']) && !empty($service['service_username'])) {
       $js_service_list[] = "{ service: '" . check_plain($service['service_name']) . "', user: '" . check_plain($service['service_username']) . "' }";
     }
   }
 
-  if(!empty($js_service_list)) {
+  if (!empty($js_service_list)) {
     $output .= "<div id=\"social_river_" . $uid . "\">&nbsp;</div><script type=\"text/javascript\">
     (function(){
       var count = 0,
-      list = [  " . implode(",",$js_service_list) .  "  ];
+      list = [  " . implode(",", $js_service_list) .  "  ];
 
       Date.prototype.toISO8601 = function(date) {
           var pad = function (amount, width) {
