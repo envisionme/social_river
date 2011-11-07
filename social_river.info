@@ -1,0 +1,5 @@
+name = Social River
+description = Social river (stream) built on
+core = 6.x
+package = Social
+dependencies[] = jquery_update

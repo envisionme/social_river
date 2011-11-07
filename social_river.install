@@ -1,0 +1,52 @@
+<?php
+// @file this is the installation file for the module social_river. All DB Tables are created here
+
+/**
+ * Implements hook_install()
+ */
+function social_river_install() {
+  drupal_install_schema('social_river');
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function social_river_uninstall() {
+  drupal_uninstall_schema('social_river');
+  variable_del('social_river_feed_limit');
+  variable_del('social_river_services_enabled');
+  
+}
+
+/**
+* Implements hook_schema()
+*/
+function social_river_schema() {
+  $schema['social_river'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'service_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => '',
+      ),
+      'service_username' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'A serialized array settings for social river (future use).',
+      ),
+    ),
+  );
+
+  return $schema;
+}
