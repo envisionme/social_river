@@ -36,40 +36,7 @@ function social_river_menu() {
  * Admin settings form.
  */
 function social_river_settings() {
-  
-  $service_list = array(
-    'Bitbucket' => '',
-    'Bitly' => '',
-    'Blogger' => '',
-    'Dailymotion' => '',
-    'Delicious' => '',
-    'Deviantart' => '',
-    'Dribbble' => '',
-    'Facebook_page' => 'Please supply your Facebook page id, <a href="http://rieglerova.net/how-to-get-a-facebook-fan-page-id/">click here</a> for more info.',
-    'Flickr' => 'Please supply your Flickr id, <a href="http://idgettr.com/">click here</a> for more info.',
-    'Foomark' => '',
-    'Formspring' => '',
-    'Forrst' => '',
-    'Foursquare' => 'Please supply your Foursquare feed id, <a href="http://www.cl.ly/7TEJ">click here</a> for more info.',
-    'Github' => '',
-    'Googlereader' => 'Please supply your Googlereader feed id, <a href="http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion">click here </a> for more info.',
-    'Instapaper' => '',
-    'Iusethis' => '',
-    'Lastfm' => '',
-    'Mlkshk' => '',
-    'Picplz' => '',
-    'Pinboard' => '',
-    'Posterous' => '',
-    'Reddit' => '',
-    'Slideshare' => '',
-    'Snipplr' => '',
-    'Stackoverflow' => 'Please supply your Stackoverflow id, <a href="http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png">click here</a> for more info.',
-    'Tumblr' => '',
-    'Twitter' => '',
-    'Vimeo' => '',
-    'Wordpress' => '',
-    'Youtube' => '',
-  );   
+  $service_list = service_list();
 
   $form['social_river'] = array(
     '#type' => 'fieldset',
@@ -91,7 +58,7 @@ function social_river_settings() {
   
   $services = array();
   foreach ($service_list as $key => $value) {
-    $services[strtolower($key)] = str_replace('_',' ',$key);
+    $services[strtolower($key)] = str_replace('_', ' ', $key);
   }
   
   $form['social_river']['services']['social_river_services_enabled'] = array(
@@ -100,8 +67,7 @@ function social_river_settings() {
     '#default_value' => variable_get('social_river_services_enabled', $services),
     '#options' => $services,
   );
-  
-  
+    
   return system_settings_form($form);
 }
 
@@ -113,43 +79,11 @@ function social_river_settings() {
 function social_river_user_settings_form() {
   global $user;
   
-  $service_list = array(
-    'Bitbucket' => '',
-    'Bitly' => '',
-    'Blogger' => '',
-    'Dailymotion' => '',
-    'Delicious' => '',
-    'Deviantart' => '',
-    'Dribbble' => '',
-    'Facebook_page' => 'Please supply your Facebook page id, <a href="http://rieglerova.net/how-to-get-a-facebook-fan-page-id/" target="_blank">click here</a> for more info.',
-    'Flickr' => 'Please supply your Flickr id, <a href="http://idgettr.com/" target="_blank">click here</a> for more info.',
-    'Foomark' => '',
-    'Formspring' => '',
-    'Forrst' => '',
-    'Foursquare' => 'Please supply your Foursquare feed id, <a href="http://www.cl.ly/7TEJ" target="_blank">click here</a> for more info.',
-    'Github' => '',
-    'Googlereader' => 'Please supply your Googlereader feed id, <a href="http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion" target="_blank">click here </a> for more info.',
-    'Instapaper' => '',
-    'Iusethis' => '',
-    'Lastfm' => '',
-    'Mlkshk' => '',
-    'Picplz' => '',
-    'Pinboard' => '',
-    'Posterous' => '',
-    'Reddit' => '',
-    'Slideshare' => '',
-    'Snipplr' => '',
-    'Stackoverflow' => 'Please supply your Stackoverflow id, <a href="http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png" target="_blank">click here</a> for more info.',
-    'Tumblr' => '',
-    'Twitter' => '',
-    'Vimeo' => '',
-    'Wordpress' => '',
-    'Youtube' => '',
-  );   
+  $service_list = service_list();
   
   _social_river_add_scripts();
 
-  drupal_set_title(t('Social River Configuration'));
+  drupal_set_title(t('Social river settings'));
   
   $form = array();
 
@@ -174,7 +108,7 @@ function social_river_user_settings_form() {
   $services_enabled = variable_get('social_river_services_enabled', $services);
 
   foreach ($service_list as $service => $help_text) {
-    if($services_enabled[strtolower($service)]){
+    if ($services_enabled[strtolower($service)]) {
       $user_value = _social_river_get_user_service($service);
       if ($user_value) {
           $default = $user_value['service_username'];
@@ -189,17 +123,16 @@ function social_river_user_settings_form() {
         '#type' => 'textfield',
         '#size' => 30,
         '#maxlength' => 255,
-        '#default_value' => !empty($default) ? $default : str_replace('_',' ',$service),        
+        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),        
       );
 
       if (!empty($help_text)) {        
           
-        //$form['social_river_user_settings'][strtolower($service)]['#description'] = $help_text;
-        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title'=>$help_text,'class'=>$font_color_class,'onfocus'=>'if(this.value == "'.str_replace('_',' ',$service).'")this.value = "";this.setAttribute("class", "service_active");', 'onblur'=>'if(this.value == "")this.value = "'.str_replace('_',' ',$service).'";if(this.value == "'.str_replace('_',' ',$service).'")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
+        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
       else{
-        //$form['social_river_user_settings'][strtolower($service)]['#description'] = '';
-        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class'=>$font_color_class,'onfocus'=>'if(this.value == "'.str_replace('_',' ',$service).'")this.value = "";this.setAttribute("class", "service_active");', 'onblur'=>'if(this.value == "")this.value = "'.str_replace('_',' ',$service).'";if(this.value == "'.str_replace('_',' ',$service).'")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
+
+        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
     }
   }
@@ -220,35 +153,35 @@ function social_river_user_settings_form() {
 
 
 /**
-* Submit handler function for adminsettings form
-*/
+ * Submit handler function for admin settings form
+ */
 function social_river_user_settings_form_submit($form, &$form_state) {
   global $user;
 
-  //empty user settings in db
-   _social_river_empty_user_service($user->uid);
+  // empty user settings in db  
+  _social_river_empty_user_service($user->uid);
 
   $services = $form_state['values']['social_river_user_settings'];
   foreach ($services as $service => $service_username) {
-    if ($service != str_replace(' ','_',strtolower($service_username)) && !empty($service)) {
+    if ($service != str_replace(' ', '_', strtolower($service_username)) && !empty($service)) {
       _social_river_save_service($service, $service_username);
-	}
+    }
   }
   drupal_set_message(t('Data has been saved.'));
 }
 
 
 /**
-* delete a wall!
-*/
+ * remove service from a user's settings!
+ */
 function _social_river_delete_service($service) {
   global $user;
   db_query('DELETE FROM {social_river} WHERE uid=%d and service_name ="%s"', $user->uid, $service);
 }
 
 /**
-* Save a wall!
-*/
+ * Add settings for a service to a user's settings
+ */
 function _social_river_save_service($service, $service_username, $data='') {
   global $user;
     
@@ -259,20 +192,19 @@ function _social_river_save_service($service, $service_username, $data='') {
       $service_username,
       serialize($data)
     );
-  }
-    
+  }    
 }
 
 /**
-* Delete all user service settings
-*/
+ * Delete all user service settings
+ */
 function _social_river_empty_user_service($uid) {
     db_query('DELETE FROM {social_river} WHERE uid=%d', $uid);
 }
 
 /**
-* Fetch user setting for a particular service
-*/
+ * Fetch user setting for a particular service
+ */
 function _social_river_get_user_service($service) {
     global $user;
     $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $user->uid, $service);
@@ -285,8 +217,8 @@ function _social_river_get_user_service($service) {
 }
 
 /**
-* Fetch all user services
-*/
+ * Fetch all user services
+ */
 function _social_river_get_user_services($uid) {
 
     $result = db_query('SELECT * FROM {social_river} WHERE uid=%d', $uid);
@@ -301,23 +233,21 @@ function _social_river_get_user_services($uid) {
 
 
 /**
-* Add CSS and JS Files needed for displaying the river
-*/
+ * Add CSS and JS Files needed for displaying the river
+ */
 function _social_river_add_scripts() {
-
   drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');  
-  if (module_exists('timeago')) {	
-	drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
+  if (module_exists('timeago')) {
+    drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
   }  
   drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
-
 }
 
 
 
 /**
-* Implements hook_block
-*/
+ * Implements hook_block
+ */
 function social_river_block($op='list', $delta=0, $edit=array()) {
   global $user;
 
@@ -329,10 +259,6 @@ function social_river_block($op='list', $delta=0, $edit=array()) {
       return $blocks;
     case 'view':
         _social_river_add_scripts();
-        //Ivan I checked the user_relationships extras module and got get_uid_from_url()
-        //hoping that this is the way you are making this bl0ck space aware?     
-        //$river = _social_river_get_river_code(get_uid_from_url());
-        //for testing i am just using the current user
         $river = _social_river_get_river_code($user->uid);
         $block['subject'] = 'Social River';
         $block['content'] = $river;
@@ -342,19 +268,19 @@ function social_river_block($op='list', $delta=0, $edit=array()) {
 }
 
 /**
-* Return code of a wall
-*/
+ * Return code of a wall
+ */
 function _social_river_get_river_code($uid) {
   global $user;
 
   $output = '';
   if ( (!user_access('view own social river') && !user_access('view all social rivers') ) ||
-       (user_access('view own social river') && $uid != $user->uid )
+        (user_access('view own social river') && $uid != $user->uid )
   ) return $output;
 
   $services = _social_river_get_user_services(arg(1));
 
-  //Create js services list
+  // Create js services list
   $js_service_list = array();
   foreach ($services as $service) {
     if (!empty($service['service_name']) && !empty($service['service_username'])) {
@@ -389,7 +315,7 @@ function _social_river_get_river_code($uid) {
         };
 
       $('#social_river_" . $uid . "').lifestream({
-        limit: ".variable_get('social_river_feed_limit', 10).",
+        limit: " . variable_get('social_river_feed_limit', 10) . ",
         list: list,
         feedloaded: function(){
           count++;
@@ -411,5 +337,44 @@ function _social_river_get_river_code($uid) {
   }
 
   return '';
+}
 
+/*
+ * Returns an array containing the list of services currently supported 
+ * by jQuery lifestream and help text associated with the services.
+ */
+function service_list() {
+  return $service_list = array(
+    'Bitbucket' => '',
+    'Bitly' => '',
+    'Blogger' => '',
+    'Dailymotion' => '',
+    'Delicious' => '',
+    'Deviantart' => '',
+    'Dribbble' => '',
+    'Facebook_page' => 'Please supply your Facebook page id, ' . l('http://rieglerova.net/how-to-get-a-facebook-fan-page-id/', 'click here') . ' for more info.',
+    'Flickr' => 'Please supply your Flickr id, ' . l('click here', 'http://idgettr.com/') . ' for more info.',
+    'Foomark' => '',
+    'Formspring' => '',
+    'Forrst' => '',
+    'Foursquare' => 'Please supply your Foursquare feed id, ' . l('click here', 'http://www.cl.ly/7TEJ') . ' for more info.',
+    'Github' => '',
+    'Googlereader' => 'Please supply your Googlereader feed id, ' . l('click here', 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion') . ' for more info.',
+    'Instapaper' => '',
+    'Iusethis' => '',
+    'Lastfm' => '',
+    'Mlkshk' => '',
+    'Picplz' => '',
+    'Pinboard' => '',
+    'Posterous' => '',
+    'Reddit' => '',
+    'Slideshare' => '',
+    'Snipplr' => '',
+    'Stackoverflow' => 'Please supply your Stackoverflow id, ' . l('click here', 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png') . ' for more info.',
+    'Tumblr' => '',
+    'Twitter' => '',
+    'Vimeo' => '',
+    'Wordpress' => '',
+    'Youtube' => '',
+  ); 
 }

@@ -1,5 +1,8 @@
 <?php
-// @file this is the installation file for the module social_river. All DB Tables are created here
+/**
+ * @file
+ * Install, update and uninstall functions for the social_river module.
+ */
 
 /**
  * Implements hook_install()
@@ -15,12 +18,11 @@ function social_river_uninstall() {
   drupal_uninstall_schema('social_river');
   variable_del('social_river_feed_limit');
   variable_del('social_river_services_enabled');
-  
 }
 
 /**
-* Implements hook_schema()
-*/
+ * Implements hook_schema()
+ */
 function social_river_schema() {
   $schema['social_river'] = array(
     'fields' => array(
