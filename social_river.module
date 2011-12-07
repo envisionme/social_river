@@ -12,9 +12,12 @@
  */
 function social_river_perm() {
   return array('administer social river', 'view own social river', 'view all social rivers',
-               'set own social river settings');
+               'set own social river settings',);
 }
 
+/*
+ * Implements hook_menu().
+ */
 function social_river_menu() {
   $items['user/%user/edit/social_river'] = array(
     'title' => 'Social River',
@@ -72,7 +75,7 @@ function social_river_settings() {
   return system_settings_form($form);
 }
 
-/*
+/**
  * Admin settings form.
  */
 function social_river_user_settings_form() {
@@ -95,12 +98,16 @@ function social_river_user_settings_form() {
   );
 
   /*
-   * Array of services we allow, key = service name  value = help link (where necessary otherwise blank)
+   * Array of services we allow, key = service name  value = help link.
+   * (where necessary otherwise blank)
    */
-  $form['social_river_user_settings']['form_column_wrapper_start'] = array(    
+
+
+  $form['social_river_user_settings']['form_column_wrapper_start'] = array(
     '#value' => '<div id="social-river-column-wrapper">',
   );
-  
+
+
   $services_enabled = variable_get('social_river_services_enabled', $services);
 
   foreach ($service_list as $service => $help_text) {
@@ -115,33 +122,33 @@ function social_river_user_settings_form() {
           $font_color_class = 'service_inactive';
       }
 
-      $form['social_river_user_settings'][strtolower($service)] = array(      
+      $form['social_river_user_settings'][strtolower($service)] = array(
         '#type' => 'textfield',
         '#size' => 30,
         '#maxlength' => 255,
-        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),        
+        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),
       );
 
       if (!empty($help_text)) {
         $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
-      else{
+      else {
         $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
     }
   }
 
-  $form['social_river_user_settings']['form_column_wrapper_end'] = array(    
+  $form['social_river_user_settings']['form_column_wrapper_end'] = array(
     '#value' => '</div>',
   );
-  
-  
+
+
   $form['submit_button'] = array(
     '#type' => 'submit',
     '#value' => 'submit',
     '#weight' => 10,
   );
-    
+
   return $form;
 }
 
@@ -170,7 +177,7 @@ function social_river_user_settings_form_submit($form, &$form_state) {
  */
 function _social_river_delete_service($service) {
   global $user;
-  db_query('DELETE FROM {social_river} WHERE uid=%d and service_name ="%s"', $user->uid, $service);
+  db_query('DELETE FROM {social_river} WHERE uid = %d and service_name = "%s"', $user->uid, $service);
 }
 
 /**
@@ -178,7 +185,7 @@ function _social_river_delete_service($service) {
  */
 function _social_river_save_service($service, $service_username, $data='') {
   global $user;
-    
+
   if (!empty($service) && !empty($service_username)) {
     db_query('INSERT INTO {social_river} SET uid=%d, service_name="%s", service_username="%s", data="%s"',
       $user->uid,
@@ -186,7 +193,7 @@ function _social_river_save_service($service, $service_username, $data='') {
       $service_username,
       serialize($data)
     );
-  }    
+  }
 }
 
 /**
@@ -200,14 +207,14 @@ function _social_river_empty_user_service($uid) {
  * Fetch user setting for a particular service.
  */
 function _social_river_get_user_service($service) {
-    global $user;
-    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $user->uid, $service);
-    if ($row = db_fetch_array($result)) {
-        return $row;
-    }
-    else {
-        return FALSE;
-    }
+  global $user;
+  $result = db_query('SELECT * FROM {social_river} WHERE uid=%d and service_name="%s"', $user->uid, $service);
+  if ($row = db_fetch_array($result)) {
+      return $row;
+  }
+  else {
+      return FALSE;
+  }
 }
 
 /**
@@ -230,10 +237,10 @@ function _social_river_get_user_services($uid) {
  * Add CSS and JS Files needed for displaying the river.
  */
 function _social_river_add_scripts() {
-  drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');  
+  drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');
   if (module_exists('timeago')) {
     drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
-  }  
+  }
   drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
 }
 
@@ -242,7 +249,7 @@ function _social_river_add_scripts() {
 /**
  * Implements hook_block().
  */
-function social_river_block($op='list', $delta=0, $edit=array()) {
+function social_river_block($op = 'list', $delta = 0, $edit = array()) {
   global $user;
 
   switch ($op) {
@@ -270,11 +277,13 @@ function _social_river_get_river_code($uid) {
   $output = '';
   if ( (!user_access('view own social river') && !user_access('view all social rivers') ) ||
         (user_access('view own social river') && $uid != $user->uid )
-  ) return $output;
+  ) {
+    return $output;
+  }
 
   $services = _social_river_get_user_services(arg(1));
 
-  // Create js services list
+  // Create js services list.
   $js_service_list = array();
   foreach ($services as $service) {
     if (!empty($service['service_name']) && !empty($service['service_username'])) {
@@ -336,8 +345,8 @@ function _social_river_get_river_code($uid) {
   return '';
 }
 
-/*
- * Returns an array containing the list of services currently supported 
+/**
+ * Returns an array containing the list of services currently supported
  * by jQuery lifestream and help text associated with the services.
  */
 function social_river_service_list() {
@@ -378,5 +387,5 @@ function social_river_service_list() {
     'Vimeo' => '',
     'Wordpress' => '',
     'Youtube' => '',
-  ); 
+  );
 }
