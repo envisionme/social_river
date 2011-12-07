@@ -11,12 +11,12 @@
  * Implements hook_perm().
  */
 function social_river_perm() {
-  return array('administer social river', 'view own social river', 'view all social rivers', 'set own social river settings');
+  return array('administer social river', 'view own social river', 'view all social rivers', 'set own social river settings' );
 }
 
 function social_river_menu() {
   $items['user/%user/edit/social_river'] = array(
-    'title' => t('Social River'),
+    'title' => 'Social River',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('social_river_user_settings_form'),
     'access arguments' => array('set own social river settings'),
@@ -36,7 +36,7 @@ function social_river_menu() {
  * Admin settings form.
  */
 function social_river_settings() {
-  $service_list = service_list();
+  $service_list = social_river_service_list();
 
   $form['social_river'] = array(
     '#type' => 'fieldset',
@@ -72,14 +72,10 @@ function social_river_settings() {
 }
 
 
-
-/*
- *
- */
 function social_river_user_settings_form() {
   global $user;
   
-  $service_list = service_list();
+  $service_list = social_river_service_list();
   
   _social_river_add_scripts();
 
@@ -126,12 +122,10 @@ function social_river_user_settings_form() {
         '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),        
       );
 
-      if (!empty($help_text)) {        
-          
+      if (!empty($help_text)) {
         $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
       else{
-
         $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
       }
     }
@@ -153,12 +147,12 @@ function social_river_user_settings_form() {
 
 
 /**
- * Submit handler function for admin settings form
+ * Submit handler function for admin settings form.
  */
 function social_river_user_settings_form_submit($form, &$form_state) {
   global $user;
 
-  // empty user settings in db  
+  // Empty user settings in db.
   _social_river_empty_user_service($user->uid);
 
   $services = $form_state['values']['social_river_user_settings'];
@@ -172,7 +166,7 @@ function social_river_user_settings_form_submit($form, &$form_state) {
 
 
 /**
- * remove service from a user's settings!
+ * Remove service from a user's settings.
  */
 function _social_river_delete_service($service) {
   global $user;
@@ -180,7 +174,7 @@ function _social_river_delete_service($service) {
 }
 
 /**
- * Add settings for a service to a user's settings
+ * Add settings for a service to a user's settings.
  */
 function _social_river_save_service($service, $service_username, $data='') {
   global $user;
@@ -196,14 +190,14 @@ function _social_river_save_service($service, $service_username, $data='') {
 }
 
 /**
- * Delete all user service settings
+ * Delete all user service settings.
  */
 function _social_river_empty_user_service($uid) {
     db_query('DELETE FROM {social_river} WHERE uid=%d', $uid);
 }
 
 /**
- * Fetch user setting for a particular service
+ * Fetch user setting for a particular service.
  */
 function _social_river_get_user_service($service) {
     global $user;
@@ -217,7 +211,7 @@ function _social_river_get_user_service($service) {
 }
 
 /**
- * Fetch all user services
+ * Fetch all user services.
  */
 function _social_river_get_user_services($uid) {
 
@@ -233,7 +227,7 @@ function _social_river_get_user_services($uid) {
 
 
 /**
- * Add CSS and JS Files needed for displaying the river
+ * Add CSS and JS Files needed for displaying the river.
  */
 function _social_river_add_scripts() {
   drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');  
@@ -246,7 +240,7 @@ function _social_river_add_scripts() {
 
 
 /**
- * Implements hook_block
+ * Implements hook_block().
  */
 function social_river_block($op='list', $delta=0, $edit=array()) {
   global $user;
@@ -268,7 +262,7 @@ function social_river_block($op='list', $delta=0, $edit=array()) {
 }
 
 /**
- * Return code of a wall
+ * Return code of a wall.
  */
 function _social_river_get_river_code($uid) {
   global $user;
@@ -284,7 +278,8 @@ function _social_river_get_river_code($uid) {
   $js_service_list = array();
   foreach ($services as $service) {
     if (!empty($service['service_name']) && !empty($service['service_username'])) {
-      $js_service_list[] = "{ service: '" . check_plain(strtolower($service['service_name'])) . "', user: '" . check_plain($service['service_username']) . "' }";
+      $js_service_list[] = "{ service: '" . check_plain(strtolower($service['service_name'])) . "', user: '" .
+        check_plain($service['service_username']) . "' }";
     }
   }
 
@@ -326,7 +321,9 @@ function _social_river_get_river_code($uid) {
                   date = new Date(element.data('time'));
               element.append(' <abbr class=\"timeago\" title=\"' + date.toISO8601(date) + '\">' + date + \"</abbr>\");
             })
-            $('#social_river_" . $uid . " .timeago').timeago();
+            if(jQuery().timeago) {
+              $('#social_river_" . $uid . " .timeago').timeago();
+            }
           }
         }
       });
@@ -343,7 +340,7 @@ function _social_river_get_river_code($uid) {
  * Returns an array containing the list of services currently supported 
  * by jQuery lifestream and help text associated with the services.
  */
-function service_list() {
+function social_river_service_list() {
   return $service_list = array(
     'Bitbucket' => '',
     'Bitly' => '',
@@ -352,14 +349,18 @@ function service_list() {
     'Delicious' => '',
     'Deviantart' => '',
     'Dribbble' => '',
-    'Facebook_page' => 'Please supply your Facebook page id, ' . l('http://rieglerova.net/how-to-get-a-facebook-fan-page-id/', 'click here') . ' for more info.',
+    'Facebook_page' => 'Please supply your Facebook page id, ' .
+      l('http://rieglerova.net/how-to-get-a-facebook-fan-page-id/', 'click here') . ' for more info.',
     'Flickr' => 'Please supply your Flickr id, ' . l('click here', 'http://idgettr.com/') . ' for more info.',
     'Foomark' => '',
     'Formspring' => '',
     'Forrst' => '',
-    'Foursquare' => 'Please supply your Foursquare feed id, ' . l('click here', 'http://www.cl.ly/7TEJ') . ' for more info.',
+    'Foursquare' => 'Please supply your Foursquare feed id, ' . l('click here', 'http://www.cl.ly/7TEJ')
+      . ' for more info.',
     'Github' => '',
-    'Googlereader' => 'Please supply your Googlereader feed id, ' . l('click here', 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion') . ' for more info.',
+    'Googlereader' => 'Please supply your Googlereader feed id, ' .
+      l('click here', 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion') .
+      ' for more info.',
     'Instapaper' => '',
     'Iusethis' => '',
     'Lastfm' => '',
@@ -370,7 +371,8 @@ function service_list() {
     'Reddit' => '',
     'Slideshare' => '',
     'Snipplr' => '',
-    'Stackoverflow' => 'Please supply your Stackoverflow id, ' . l('click here', 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png') . ' for more info.',
+    'Stackoverflow' => 'Please supply your Stackoverflow id, ' .
+      l('click here', 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png') . ' for more info.',
     'Tumblr' => '',
     'Twitter' => '',
     'Vimeo' => '',
