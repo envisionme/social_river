@@ -15,7 +15,7 @@ function social_river_perm() {
                'set own social river settings',);
 }
 
-/*
+/**
  * Implements hook_menu().
  */
 function social_river_menu() {
@@ -183,7 +183,7 @@ function _social_river_delete_service($service) {
 /**
  * Add settings for a service to a user's settings.
  */
-function _social_river_save_service($service, $service_username, $data='') {
+function _social_river_save_service($service, $service_username, $data = '') {
   global $user;
 
   if (!empty($service) && !empty($service_username)) {
@@ -222,14 +222,14 @@ function _social_river_get_user_service($service) {
  */
 function _social_river_get_user_services($uid) {
 
-    $result = db_query('SELECT * FROM {social_river} WHERE uid=%d', $uid);
+  $result = db_query('SELECT * FROM {social_river} WHERE uid=%d', $uid);
 
-    $services = array();
-    while ($row = db_fetch_array($result)) {
-        $services[$row['service_name']] = $row;
-    }
+  $services = array();
+  while ($row = db_fetch_array($result)) {
+      $services[$row['service_name']] = $row;
+  }
 
-    return $services;
+  return $services;
 }
 
 
@@ -243,7 +243,6 @@ function _social_river_add_scripts() {
   }
   drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
 }
-
 
 
 /**
@@ -275,8 +274,8 @@ function _social_river_get_river_code($uid) {
   global $user;
 
   $output = '';
-  if ( (!user_access('view own social river') && !user_access('view all social rivers') ) ||
-        (user_access('view own social river') && $uid != $user->uid )
+  if ( (!user_access('view own social river') && !user_access('view all social rivers')) ||
+        (user_access('view own social river') && $uid != $user->uid)
   ) {
     return $output;
   }
