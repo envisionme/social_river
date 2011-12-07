@@ -11,7 +11,8 @@
  * Implements hook_perm().
  */
 function social_river_perm() {
-  return array('administer social river', 'view own social river', 'view all social rivers', 'set own social river settings' );
+  return array('administer social river', 'view own social river', 'view all social rivers',
+               'set own social river settings');
 }
 
 function social_river_menu() {
@@ -52,35 +53,37 @@ function social_river_settings() {
   $form['social_river']['services'] = array(
     '#type' => 'fieldset',
     '#title' => t('Enable services'),
-    '#collapsible' => TRUE, 
+    '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $services = array();
   foreach ($service_list as $key => $value) {
     $services[strtolower($key)] = str_replace('_', ' ', $key);
   }
-  
+
   $form['social_river']['services']['social_river_services_enabled'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Available services'),
     '#default_value' => variable_get('social_river_services_enabled', $services),
     '#options' => $services,
   );
-    
+
   return system_settings_form($form);
 }
 
-
+/*
+ * Admin settings form.
+ */
 function social_river_user_settings_form() {
   global $user;
-  
+
   $service_list = social_river_service_list();
-  
+
   _social_river_add_scripts();
 
   drupal_set_title(t('Social river settings'));
-  
+
   $form = array();
 
   $form = array();
@@ -94,12 +97,9 @@ function social_river_user_settings_form() {
   /*
    * Array of services we allow, key = service name  value = help link (where necessary otherwise blank)
    */
-
-  
   $form['social_river_user_settings']['form_column_wrapper_start'] = array(    
     '#value' => '<div id="social-river-column-wrapper">',
   );
-
   
   $services_enabled = variable_get('social_river_services_enabled', $services);
 
