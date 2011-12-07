@@ -274,7 +274,7 @@ function _social_river_get_river_code($uid) {
   global $user;
 
   $output = '';
-  if ( (!user_access('view own social river') && !user_access('view all social rivers')) ||
+  if ((!user_access('view own social river') && !user_access('view all social rivers')) ||
         (user_access('view own social river') && $uid != $user->uid)
   ) {
     return $output;
