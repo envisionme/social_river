@@ -31,7 +31,7 @@ function social_river_menu() {
     'description' => 'Configure global settings for Social River module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('social_river_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer social river'),
   );
   return $items;
 }
@@ -76,7 +76,7 @@ function social_river_settings() {
 }
 
 /**
- * Admin settings form.
+ * User settings form.
  */
 function social_river_user_settings_form() {
   global $user;
@@ -108,22 +108,23 @@ function social_river_user_settings_form() {
   );
 
 
-  $services_enabled = variable_get('social_river_services_enabled', $services);
+  $services_enabled = variable_get('social_river_services_enabled', array());
 
   foreach ($service_list as $service => $help_text) {
     if ($services_enabled[strtolower($service)]) {
       $user_value = _social_river_get_user_service($service);
       if ($user_value) {
-          $default = $user_value['service_username'];
-          $font_color_class = 'service_active';
+        $default = $user_value['service_username'];
+        $font_color_class = 'service_active';
       }
       else {
-          $default = '';
-          $font_color_class = 'service_inactive';
+        $default = '';
+        $font_color_class = 'service_inactive';
       }
 
       $form['social_river_user_settings'][strtolower($service)] = array(
-        '#type' => 'textfield',
+        '#title' => $service,
+		'#type' => 'textfield',
         '#size' => 30,
         '#maxlength' => 255,
         '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),
@@ -365,8 +366,10 @@ function social_river_service_list() {
     'Forrst' => '',
     'Foursquare' => 'Please supply your Foursquare feed id, ' . l('click here', 'http://www.cl.ly/7TEJ')
       . ' for more info.',
-    'Github' => '',
-    'Googlereader' => 'Please supply your Googlereader feed id, ' .
+	'Gimmebar' => '',
+	'Github' => '',
+    'Googleplus' => '',
+	'Googlereader' => 'Please supply your Googlereader feed id, ' .
       l('click here', 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion') .
       ' for more info.',
     'Instapaper' => '',
@@ -386,5 +389,6 @@ function social_river_service_list() {
     'Vimeo' => '',
     'Wordpress' => '',
     'Youtube' => '',
+	'Zotero' => '',
   );
 }

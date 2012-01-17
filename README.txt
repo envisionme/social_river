@@ -1,5 +1,5 @@
 *** Requirements ***
-jQuery_update 6.x-2.0-alpha1 - http://drupal.org/project/jquery_update
+jQuery_update 6.x-2.0-alpha1 (or higher) - http://drupal.org/project/jquery_update
 libraries:
     https://github.com/christianv/jquery-lifestream
 
