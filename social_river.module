@@ -380,6 +380,7 @@ function social_river_service_list() {
     'Pinboard' => '',
     'Posterous' => '',
     'Reddit' => '',
+	'RSS' => 'Please supply the feed URL.',
     'Slideshare' => '',
     'Snipplr' => '',
     'Stackoverflow' => 'Please supply your Stackoverflow id, ' .
