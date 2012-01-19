@@ -109,7 +109,10 @@ function social_river_user_settings_form() {
 
 
   $services_enabled = variable_get('social_river_services_enabled', array());
-
+  $form['social_river_user_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Services'),
+  );
   foreach ($service_list as $service => $help_text) {
     if ($services_enabled[strtolower($service)]) {
       $user_value = _social_river_get_user_service($service);
@@ -121,13 +124,16 @@ function social_river_user_settings_form() {
         $default = '';
         $font_color_class = 'service_inactive';
       }
-
+	  
       $form['social_river_user_settings'][strtolower($service)] = array(
         '#title' => $service,
-		'#type' => 'textfield',
+		'#type' => 'textfield',		
+		'#description' => $help_text,
         '#size' => 30,
         '#maxlength' => 255,
-        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),
+        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),		
+		'#prefix' => '<div style="margin:5px;float:left;">',
+		'#suffix' => '</div>'
       );
 
       if (!empty($help_text)) {

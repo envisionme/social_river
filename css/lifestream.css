@@ -121,6 +121,10 @@ background-image: url(../icons/posterous.png);
 background-image: url(../icons/reddit.png);
 }
 
+#edit-social-river-user-settings-rss, .lifestream-rss {
+background-image: url(../icons/rss.png);
+}
+
 #edit-social-river-user-settings-slideshare, .lifestream-slideshare {
 background-image: url(../icons/slideshare.png);
 }
