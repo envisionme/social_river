@@ -103,9 +103,7 @@ function social_river_user_settings_form() {
    */
 
 
-  $form['social_river_user_settings']['form_column_wrapper_start'] = array(
-    '#value' => '<div id="social-river-column-wrapper">',
-  );
+ 
 
 
   $services_enabled = variable_get('social_river_services_enabled', array());
@@ -113,6 +111,11 @@ function social_river_user_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Services'),
   );
+
+  $form['social_river_user_settings']['form_column_wrapper_start'] = array(
+    '#value' => '<div id="social-river-column-wrapper">',
+  );
+
   foreach ($service_list as $service => $help_text) {
     if ($services_enabled[strtolower($service)]) {
       $user_value = _social_river_get_user_service($service);
@@ -146,7 +149,7 @@ function social_river_user_settings_form() {
   }
 
   $form['social_river_user_settings']['form_column_wrapper_end'] = array(
-    '#value' => '</div>',
+    '#value' => '<div style="clear:both;"></div></div>',
   );
 
 
