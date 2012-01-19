@@ -33,6 +33,13 @@ function social_river_menu() {
     'page arguments' => array('social_river_settings'),
     'access arguments' => array('administer social river'),
   );
+  $items[drupal_get_path('module', 'social_river') . '/js/autofill_support.js'] = array(
+    'title' => 'Autofill Support',
+    'description' => 'Adds autofill support to the user settings form',
+    'page callback' => 'social_river_autofill_support',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array(TRUE),
+  );
   return $items;
 }
 
@@ -101,11 +108,6 @@ function social_river_user_settings_form() {
    * Array of services we allow, key = service name  value = help link.
    * (where necessary otherwise blank)
    */
-
-
- 
-
-
   $services_enabled = variable_get('social_river_services_enabled', array());
   $form['social_river_user_settings'] = array(
     '#type' => 'fieldset',
@@ -134,17 +136,22 @@ function social_river_user_settings_form() {
 		'#description' => $help_text,
         '#size' => 30,
         '#maxlength' => 255,
-        '#default_value' => !empty($default) ? $default : str_replace('_', ' ', $service),		
+        '#default_value' => $default,		
 		'#prefix' => '<div style="margin:5px;float:left;">',
 		'#suffix' => '</div>'
       );
 
-      if (!empty($help_text)) {
-        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
-      }
-      else {
-        $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
-      }
+	  if (module_exists('autofill')) {
+        drupal_add_js(drupal_get_path('module', 'social_river') . '/js/autofill_support.js');
+	  }
+	  else {	  
+        if (!empty($help_text)) {
+          $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
+        }
+        else {
+          $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
+        }
+	  }
     }
   }
 
@@ -401,4 +408,34 @@ function social_river_service_list() {
     'Youtube' => '',
 	'Zotero' => '',
   );
+}
+
+/**
+ * Generates js behaviours to allow for support of the autofill module
+ */
+function social_river_autofill_support() {
+  $services_enabled = variable_get('social_river_services_enabled', array());
+  $default_color = check_plain(variable_get('autofill_colour_default', '#ccc'));
+  $active_color = check_plain(variable_get('autofill_colour_active', '#333'));
+  
+  $output = '';
+  $output .= 'Drupal.behaviors.autofill = function(context){ ';
+  
+  foreach ($services_enabled as $service => $desc) {
+    $service = str_replace('_', '-', $service);
+	$user_value = _social_river_get_user_service($service);
+	if(empty($user_value)) {
+	  $output .= "\n" . '$("#edit-social-river-user-settings-' . strtolower($service) . '").autofill( {';
+	  $output .= "\n\t" . 'value: "' . strtoupper($service) . '",';
+	  $output .= "\n\t" . 'prePopulate: "",';
+	  $output .= "\n\t" . 'defaultTextColor: "' . $default_color . '",';
+	  $output .= "\n\t" . 'activeTextColor: "' . $active_color . '"';
+      $output .= "\n" . '});';
+	}
+  }
+  $output .= '}';
+
+  header('Content-type: text/javascript;');
+  echo $output;
+  exit();	
 }
