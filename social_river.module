@@ -16,6 +16,16 @@ function social_river_perm() {
 }
 
 /**
+ * Implements hook_init().
+ */
+function social_river_init() {
+  // Get the path for the the lifestream plugin.
+  if ($path = libraries_get_path('jquery-lifestream')) {
+    drupal_add_js($path . '/jquery.lifestream.js');
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function social_river_menu() {
@@ -254,7 +264,6 @@ function _social_river_get_user_services($uid) {
  * Add CSS and JS Files needed for displaying the river.
  */
 function _social_river_add_scripts() {
-  drupal_add_js(drupal_get_path('module', 'social_river') . '/js/jquery.lifestream.js');
   if (module_exists('timeago')) {
     drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
   }

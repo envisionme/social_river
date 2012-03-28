@@ -52,3 +52,27 @@ function social_river_schema() {
 
   return $schema;
 }
+
+/**
+ * Implementation of hook_requirements().
+ */
+function social_river_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    $path = libraries_get_path('jquery-lifestream');
+    if (!file_exists($path . '/jquery.lifestream.js')) {
+      $requirements['social_river'] = array(
+        'title' => t('Social River'),
+        'severity' => REQUIREMENT_ERROR,
+        'value' => 'Not found',
+        'description' => t('The <a href="@jquery-lifestream">jQuery lifestream</a> plugin is missing. Download it to your <em>sites/all/libraries</em> directory.', array(
+          '@jquery-lifestream' => 'https://github.com/christianv/jquery-lifestream.git',
+          '@download' => 'https://github.com/christianv/jquery-lifestream.git',
+        )),
+      );
+    }
+  }
+
+  return $requirements;
+}
