@@ -19,9 +19,19 @@ function social_river_perm() {
  * Implements hook_init().
  */
 function social_river_init() {
+  drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
   // Get the path for the the lifestream plugin.
   if ($path = libraries_get_path('jquery-lifestream')) {
     drupal_add_js($path . '/jquery.lifestream.js');
+  }
+  // Autofill module support.
+  $path = drupal_get_path('module', 'social_river');
+  if (module_exists('autofill')) {
+    drupal_add_js($path . '/js/autofill_support.js');
+  }
+
+  if (module_exists('timeago')) {
+    drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
   }
 }
 
@@ -40,79 +50,54 @@ function social_river_menu() {
     'title' => 'Social River',
     'description' => 'Configure global settings for Social River module.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('social_river_settings'),
+    'page arguments' => array('social_river_settings_form'),
     'access arguments' => array('administer social river'),
+    'file' => 'social_river.admin.inc',
   );
-  $items[drupal_get_path('module', 'social_river') . '/js/autofill_support.js'] = array(
-    'title' => 'Autofill Support',
-    'description' => 'Adds autofill support to the user settings form',
-    'page callback' => 'social_river_autofill_support',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array(TRUE),
-  );
+
+  // Autofill module support.
+  $path = drupal_get_path('module', 'social_river');
+  if (module_exists('autofill')) {
+    $items[$path . '/js/autofill_support.js'] = array(
+      'title' => 'Autofill support JS',
+      'page callback' => 'social_river_autofill_support',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array(TRUE),
+    );
+  }
   return $items;
 }
 
 /**
- * Admin settings form.
+ * Implements hook_block().
  */
-function social_river_settings() {
-  $service_list = social_river_service_list();
+function social_river_block($op = 'list', $delta = 0, $edit = array()) {
+  global $user;
 
-  $form['social_river'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Configure Social River'),
-  );
+  switch ($op) {
+    case 'list':
 
-  $form['social_river']['social_river_feed_limit'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Feed limit'),
-    '#default_value' => variable_get('social_river_feed_limit', 10),
-  );
+      $blocks[0]['info'] = t('Social River');
 
-  $form['social_river']['services'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Enable services'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
+      return $blocks;
+    case 'view':
+      $river = _social_river_get_river_code($user->uid);
+      $block['subject'] = t('Social River');
+      $block['content'] = $river;
 
-  $services = array();
-  foreach ($service_list as $key => $value) {
-    $services[strtolower($key)] = str_replace('_', ' ', $key);
+      return $block;
   }
-
-  $form['social_river']['services']['social_river_services_enabled'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Available services'),
-    '#default_value' => variable_get('social_river_services_enabled', $services),
-    '#options' => $services,
-  );
-
-  return system_settings_form($form);
 }
 
 /**
  * User settings form.
  */
 function social_river_user_settings_form() {
-  global $user;
-
-  $service_list = social_river_service_list();
-
-  _social_river_add_scripts();
-
+  $service_list = social_river_services();
   drupal_set_title(t('Social river settings'));
 
   $form = array();
-
-  $form = array();
   $form['#tree'] = TRUE;
-
-  $form['social_river_user_settings'] = array(
-    '#type' => 'item',
-    '#value' => t('Provide usernames for each of the services that you wish to appear on your social river.'),
-  );
 
   /*
    * Array of services we allow, key = service name  value = help link.
@@ -122,63 +107,33 @@ function social_river_user_settings_form() {
   $form['social_river_user_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Services'),
+    '#description' => t('Provide usernames for each of the services that you wish to appear on your social river.'),
   );
 
-  $form['social_river_user_settings']['form_column_wrapper_start'] = array(
-    '#value' => '<div id="social-river-column-wrapper">',
-  );
-
-  foreach ($service_list as $service => $help_text) {
-    if ($services_enabled[strtolower($service)]) {
-      $user_value = _social_river_get_user_service($service);
-      if ($user_value) {
-        $default = $user_value['service_username'];
-        $font_color_class = 'service_active';
-      }
-      else {
-        $default = '';
-        $font_color_class = 'service_inactive';
-      }
-	  
-      $form['social_river_user_settings'][strtolower($service)] = array(
-        '#title' => $service,
-		'#type' => 'textfield',		
-		'#description' => $help_text,
-        '#size' => 30,
-        '#maxlength' => 255,
-        '#default_value' => $default,		
-		'#prefix' => '<div style="margin:5px;float:left;">',
-		'#suffix' => '</div>'
+  // Print all available services for the user.
+  foreach ($service_list as $service => $data) {
+    $user_value = _social_river_get_user_service($service);
+    $default = '';
+    if ($user_value) {
+      $default = $user_value['service_username'];
+    }
+    if ($services_enabled[$service]) {
+      $form['social_river_user_settings'][$service] = array(
+        '#title' => $data['title'],
+        '#type' => 'textfield',
+        '#description' => $data['description'],
+        '#default_value' => $default,
       );
-
-	  if (module_exists('autofill')) {
-        drupal_add_js(drupal_get_path('module', 'social_river') . '/js/autofill_support.js');
-	  }
-	  else {	  
-        if (!empty($help_text)) {
-          $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('title' => $help_text, 'class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
-        }
-        else {
-          $form['social_river_user_settings'][strtolower($service)]['#attributes'] = array('class' => $font_color_class, 'onfocus' => 'if(this.value == "' . str_replace('_', ' ', $service) . '")this.value = "";this.setAttribute("class", "service_active");', 'onblur' => 'if(this.value == "")this.value = "' . str_replace('_', ' ', $service) . '";if(this.value == "' . str_replace('_', ' ', $service) . '")this.setAttribute("class", "service_inactive");else this.setAttribute("class", "service_active");');
-        }
-	  }
     }
   }
 
-  $form['social_river_user_settings']['form_column_wrapper_end'] = array(
-    '#value' => '<div style="clear:both;"></div></div>',
-  );
-
-
   $form['submit_button'] = array(
     '#type' => 'submit',
-    '#value' => 'submit',
-    '#weight' => 10,
+    '#value' => t('Submit'),
   );
 
   return $form;
 }
-
 
 /**
  * Submit handler function for admin settings form.
@@ -197,7 +152,6 @@ function social_river_user_settings_form_submit($form, &$form_state) {
   }
   drupal_set_message(t('Data has been saved.'));
 }
-
 
 /**
  * Remove service from a user's settings.
@@ -257,40 +211,6 @@ function _social_river_get_user_services($uid) {
   }
 
   return $services;
-}
-
-
-/**
- * Add CSS and JS Files needed for displaying the river.
- */
-function _social_river_add_scripts() {
-  if (module_exists('timeago')) {
-    drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
-  }
-  drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
-}
-
-
-/**
- * Implements hook_block().
- */
-function social_river_block($op = 'list', $delta = 0, $edit = array()) {
-  global $user;
-
-  switch ($op) {
-    case 'list':
-
-      $blocks[0]['info'] = t('Social River');
-
-      return $blocks;
-    case 'view':
-        _social_river_add_scripts();
-        $river = _social_river_get_river_code($user->uid);
-        $block['subject'] = 'Social River';
-        $block['content'] = $river;
-
-        return $block;
-  }
 }
 
 /**
@@ -372,51 +292,221 @@ function _social_river_get_river_code($uid) {
 
 /**
  * Returns an array containing the list of services currently supported
- * by jQuery lifestream and help text associated with the services.
+ * by jQuery lifestream, full name, and help text and autofill data associated with the services.
  */
-function social_river_service_list() {
-  return $service_list = array(
-    'Bitbucket' => '',
-    'Bitly' => '',
-    'Blogger' => '',
-    'Dailymotion' => '',
-    'Delicious' => '',
-    'Deviantart' => '',
-    'Dribbble' => '',
-    'Facebook_page' => 'Please supply your Facebook page id, ' .
-      l('http://rieglerova.net/how-to-get-a-facebook-fan-page-id/', 'click here') . ' for more info.',
-    'Flickr' => 'Please supply your Flickr id, ' . l('click here', 'http://idgettr.com/') . ' for more info.',
-    'Foomark' => '',
-    'Formspring' => '',
-    'Forrst' => '',
-    'Foursquare' => 'Please supply your Foursquare feed id, ' . l('click here', 'http://www.cl.ly/7TEJ')
-      . ' for more info.',
-	'Gimmebar' => '',
-	'Github' => '',
-    'Googleplus' => '',
-	'Googlereader' => 'Please supply your Googlereader feed id, ' .
-      l('click here', 'http://groups.google.com/d/topic/google-reader-howdoi/BLfyLeG5QUk/discussion') .
-      ' for more info.',
-    'Instapaper' => '',
-    'Iusethis' => '',
-    'Lastfm' => '',
-    'Mlkshk' => '',
-    'Picplz' => '',
-    'Pinboard' => '',
-    'Posterous' => '',
-    'Reddit' => '',
-	'RSS' => 'Please supply the feed URL.',
-    'Slideshare' => '',
-    'Snipplr' => '',
-    'Stackoverflow' => 'Please supply your Stackoverflow id, ' .
-      l('click here', 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png') . ' for more info.',
-    'Tumblr' => '',
-    'Twitter' => '',
-    'Vimeo' => '',
-    'Wordpress' => '',
-    'Youtube' => '',
-	'Zotero' => '',
+function social_river_services() {
+  $list = array();
+
+  $list['bitbucket'] = array(
+    'title' => t('Bitbucket'),
+    'description' => 'Please supply your Bitbucket username.',
+    'autofill' => 'Bitbucket username',
   );
+
+  $list['bitly'] = array(
+    'title' => t('Bitly'),
+    'description' => 'Please supply your Bitly username.',
+    'autofill' => 'Bitly username',
+  );
+
+  $list['blogger'] = array(
+    'title' => t('Blogger'),
+    'description' => 'Please supply your Blogger username.',
+    'autofill' => 'Blogger username',
+  );
+
+  $list['dailymotion'] = array(
+    'title' => t('Dailymotion'),
+    'description' => 'Please supply your Dailymotion username.',
+    'autofill' => 'Dailymotion username',
+  );
+
+  $list['delicious'] = array(
+    'title' => t('Delicious'),
+    'description' => 'Please supply your Delicious username.',
+    'autofill' => 'Delicious username',
+  );
+
+  $list['deviantart'] = array(
+    'title' => t('Deviantart'),
+    'description' => 'Please supply your Deviantart username.',
+    'autofill' => 'Deviantart username',
+  );
+
+  $list['dribbble'] = array(
+    'title' => t('Dribbble'),
+    'description' => 'Please supply your Dribbble username.',
+    'autofill' => 'Dribbble username',
+  );
+
+  $list['facebook'] = array(
+    'title' => t('Facebook'),
+    'description' => 'Please supply your Facebook page ID, ' . l('http://rieglerova.net/how-to-get-a-facebook-fan-page-id/', 'click here') . ' for more info.',
+    'autofill' => 'Facebook page ID',
+  );
+
+  $list['flickr'] = array(
+    'title' => t('Flickr'),
+    'description' => 'Please supply your Flickr ID, ' . l('click here', 'http://idgettr.com/') . ' for more info.',
+    'autofill' => 'Flickr ID',
+  );
+
+  $list['foursquare'] = array(
+    'title' => t('Foursquare'),
+    'description' => 'Please supply your Foursquare feed ID, ' . l('click here', 'http://www.cl.ly/7TEJ') . '.',
+    'autofill' => 'Foursquare feed ID',
+  );
+
+  $list['foomark'] = array(
+    'title' => t('Foomark'),
+    'description' => 'Please supply your Foomark username.',
+    'autofill' => 'Foomark username',
+  );
+
+  $list['formspring'] = array(
+    'title' => t('Formspring'),
+    'description' => 'Please supply your Formspring username.',
+    'autofill' => 'Formspring username',
+  );
+
+  $list['forrst'] = array(
+    'title' => t('Forrst'),
+    'description' => 'Please supply your Forrst username.',
+    'autofill' => 'Forrst username',
+  );
+
+  $list['gimmebar'] = array(
+    'title' => t('Gimmebar'),
+    'description' => 'Please supply your Gimmebar username.',
+    'autofill' => 'Gimmebar username',
+  );
+
+  $list['github'] = array(
+    'title' => t('Github'),
+    'description' => 'Please supply your Github username.',
+    'autofill' => 'Github username',
+  );
+
+  $list['googleplus'] = array(
+    'title' => t('Googleplus'),
+    'description' => 'Please supply your Googleplus username.',
+    'autofill' => 'Googleplus username',
+  );
+
+  $list['googlereader'] = array(
+    'title' => t('Googlereader'),
+    'description' => 'Please supply your Googlereader feed ID.',
+    'autofill' => 'Googlereader feed ID',
+  );
+
+  $list['instapaper'] = array(
+    'title' => t('Instapaper'),
+    'description' => 'Please supply your Instapaper username.',
+    'autofill' => 'Instapaper username',
+  );
+
+  $list['iusethis'] = array(
+    'title' => t('Iusethis'),
+    'description' => 'Please supply your Iusethis username.',
+    'autofill' => 'Iusethis username',
+  );
+
+  $list['lastfm'] = array(
+    'title' => t('Lastfm'),
+    'description' => 'Please supply your Lastfm username.',
+    'autofill' => 'Lastfm username',
+  );
+
+  $list['mlkshk'] = array(
+    'title' => t('Mlkshk'),
+    'description' => 'Please supply your Mlkshk username.',
+    'autofill' => 'Mlkshk username',
+  );
+
+  $list['picplz'] = array(
+    'title' => t('Picplz'),
+    'description' => 'Please supply your Picplz username.',
+    'autofill' => 'Picplz username',
+  );
+
+  $list['pinboard'] = array(
+    'title' => t('Pinboard'),
+    'description' => 'Please supply your Pinboard username.',
+    'autofill' => 'Pinboard username',
+  );
+
+  $list['posterous'] = array(
+    'title' => t('Posterous'),
+    'description' => 'Please supply your Posterous username.',
+    'autofill' => 'Posterous username',
+  );
+
+  $list['reddit'] = array(
+    'title' => t('Reddit'),
+    'description' => 'Please supply your Reddit username.',
+    'autofill' => 'Reddit username',
+  );
+
+  $list['rss'] = array(
+    'title' => t('RSS'),
+    'description' => 'Please supply the feed URL.',
+    'autofill' => 'Feed URL',
+  );
+
+  $list['slideshare'] = array(
+    'title' => t('Slideshare'),
+    'description' => 'Please supply your Slideshare username.',
+    'autofill' => 'Slideshare username',
+  );
+
+  $list['snipplr'] = array(
+    'title' => t('Snipplr'),
+    'description' => 'Please supply your Snipplr username.',
+    'autofill' => 'Snipplr username',
+  );
+
+  $list['stackoverflow'] = array(
+    'title' => t('Stackoverflow'),
+    'description' => 'Please supply your Stackoverflow id, ' . l('click here', 'http://f.cl.ly/items/0a3K2Z42442l3d030g0E/stackoverflow.png') . ' for more info.',
+    'autofill' => 'Stackoverflow username',
+  );
+
+  $list['tumblr'] = array(
+    'title' => t('Tumblr'),
+    'description' => 'Please supply your Tumblr username.',
+    'autofill' => 'Tumblr username',
+  );
+
+  $list['twitter'] = array(
+    'title' => t('Twitter'),
+    'description' => 'Please supply your Twitter username.',
+    'autofill' => 'Twitter username',
+  );
+
+  $list['vimeo'] = array(
+    'title' => t('Vimeo'),
+    'description' => 'Please supply your Vimeo username.',
+    'autofill' => 'Vimeo username',
+  );
+
+  $list['wordpress'] = array(
+    'title' => t('Wordpress'),
+    'description' => 'Please supply your Wordpress username.',
+    'autofill' => 'Wordpress username',
+  );
+
+  $list['youtube'] = array(
+    'title' => t('Youtube'),
+    'description' => 'Please supply your Youtube username.',
+    'autofill' => 'Youtube username',
+  );
+
+  $list['zotero'] = array(
+    'title' => t('Zotero'),
+    'description' => 'Please supply your Zotero username.',
+    'autofill' => 'Zotero username',
+  );
+  return $list;
 }
 
 /**
@@ -426,29 +516,41 @@ function social_river_autofill_support() {
   $services_enabled = variable_get('social_river_services_enabled', array());
   $default_color = check_plain(variable_get('autofill_colour_default', '#ccc'));
   $active_color = check_plain(variable_get('autofill_colour_active', '#333'));
-  
-  $output = '';
-  $output .= 'Drupal.behaviors.autofill = function(context){ ';
-  
-  foreach ($services_enabled as $service => $desc) {
-    $service = str_replace('_', '-', $service);
-	$user_value = _social_river_get_user_service($service);
-	if(empty($user_value)) {
-	  $output .= "\n" . '$("#edit-social-river-user-settings-' . strtolower($service) . '").autofill( {';
-	  $output .= "\n\t" . 'value: "' . strtoupper($service) . '",';
-	  $output .= "\n\t" . 'prePopulate: "",';
-	  $output .= "\n\t" . 'defaultTextColor: "' . $default_color . '",';
-	  $output .= "\n\t" . 'activeTextColor: "' . $active_color . '"';
+
+  $output = 'Drupal.behaviors.social_river_autofill = function(context) {';
+
+  foreach ($services_enabled as $service => $data) {
+    $user_value = _social_river_get_user_service($service);
+    if(empty($user_value)) {
+      $output .= "\n" . '$("#edit-social-river-user-settings-' . $service . '").autofill({';
+      $output .= "\n\t" . 'value: "' . $data['autofill'] . '",';
+      $output .= "\n\t" . 'prePopulate: "",';
+      $output .= "\n\t" . 'defaultTextColor: "' . $default_color . '",';
+      $output .= "\n\t" . 'activeTextColor: "' . $active_color . '"';
       $output .= "\n" . '});';
-	}
+    }
   }
   $output .= '}';
 
   header('Content-type: text/javascript;');
   echo $output;
-  exit();	
+  exit();
 }
 
+/**
+ * Implementation of hook_user().
+ */
+function social_river_user($op, &$edit, &$user, $category = NULL) {
+ switch ($op) {
+    case 'categories':
+      return array(
+        array(
+          'name' => 'social_river',
+          'title' => t('Social River'),
+        ),
+      );
+  }
+}
 function social_river_user($op, &$edit, &$user, $category = NULL) {
  switch ($op) {
     case 'categories':
