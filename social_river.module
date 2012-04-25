@@ -448,3 +448,16 @@ function social_river_autofill_support() {
   echo $output;
   exit();	
 }
+
+function social_river_user($op, &$edit, &$user, $category = NULL) {
+ switch ($op) {
+    case 'categories':
+      return array(
+        array(
+          'name' => 'social_river',
+          'title' => t('Social River'),
+          'weight' => 3,
+        ),
+      );
+  }
+}
