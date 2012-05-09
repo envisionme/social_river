@@ -23,6 +23,12 @@ function social_river_settings_form() {
     '#default_value' => variable_get('social_river_feed_limit', 10),
   );
 
+  $form['social_river']['social_river_preview'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show preview on user forms'),
+    '#default_value' => variable_get('social_river_preview', 0),
+  );
+
   $form['social_river']['services'] = array(
     '#type' => 'fieldset',
     '#title' => t('Enable services'),

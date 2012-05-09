@@ -132,6 +132,18 @@ function social_river_user_settings_form() {
     '#value' => t('Submit'),
   );
 
+  // Preview for social river forms.
+  $preview = variable_get('social_river_preview', 0);
+  if (!empty($preview)) {
+    $block = module_invoke('social_river', 'block', 'view', 0);
+    $form['preview'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Preview'),
+    );
+    $form['preview']['preview_data'] = array(
+      '#value' => $block['content'],
+    );
+  }
   return $form;
 }
 

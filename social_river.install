@@ -18,6 +18,7 @@ function social_river_uninstall() {
   drupal_uninstall_schema('social_river');
   variable_del('social_river_feed_limit');
   variable_del('social_river_services_enabled');
+  variable_del('social_river_preview');
 }
 
 /**
