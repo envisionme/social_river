@@ -20,6 +20,7 @@ function social_river_settings_form() {
   $form['social_river']['social_river_feed_limit'] = array(
     '#type' => 'textfield',
     '#title' => t('Feed limit'),
+    '#description' => t('The limit of results that will be displayed the feed.'),
     '#default_value' => variable_get('social_river_feed_limit', 10),
   );
 
@@ -27,6 +28,15 @@ function social_river_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Show preview on user forms'),
     '#default_value' => variable_get('social_river_preview', 0),
+  );
+
+  $form['social_river']['social_river_block_number'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of blocks'),
+    '#multiple' => FALSE,
+    '#options' => drupal_map_assoc(range(1, 10)),
+    '#description' => t('The number of Social River blocks.'),
+    '#default_value' => variable_get('social_river_block_number', 1),
   );
 
   $form['social_river']['services'] = array(

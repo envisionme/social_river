@@ -76,16 +76,41 @@ function social_river_block($op = 'list', $delta = 0, $edit = array()) {
 
   switch ($op) {
     case 'list':
+      $blocks[0]['info'] = t('Social River - User Page');
 
-      $blocks[0]['info'] = t('Social River');
-
+      // Specify custom amount of blocks.
+      $number = variable_get('social_river_block_number', 1);
+      for ($i = 1; $i <= $number; $i++) {
+        $blocks[$i]['info'] = t('Social river - Custom ' . $i);
+        $blocks[$i]['cache'] = BLOCK_NO_CACHE;
+      }
       return $blocks;
-    case 'view':
-      $river = _social_river_get_river_code($user->uid);
-      $block['subject'] = t('Social River');
-      $block['content'] = $river;
 
-      return $block;
+    case 'configure':
+      if ($delta > 0) {
+        $form = array();
+        return _social_river_block_settings_form($form, $delta);
+      }
+      break;
+
+    case 'save':
+      $data = $edit['block_settings']['social_river_block_settings'];
+      variable_set('social_river_block_'. $delta, $data);
+      return;
+
+    case 'view':
+      if ($delta == 0) {
+        $river = _social_river_get_river_code($user->uid);
+        $block['subject'] = t('Social River');
+        $block['content'] = $river;
+        return $block;
+      } else {
+        $river = _social_river_get_river_block_code($delta);
+        $block['subject'] = t('Social River');
+        $block['content'] = $river;
+        return $block;
+      }
+      break;
   }
 }
 
@@ -111,11 +136,15 @@ function social_river_user_settings_form() {
   );
 
   // Print all available services for the user.
+  $has_services = FALSE;
   foreach ($service_list as $service => $data) {
     $user_value = _social_river_get_user_service($service);
     $default = '';
     if ($user_value) {
       $default = $user_value['service_username'];
+      // Set flag for preview.
+      if (!$has_services)
+        $has_services = TRUE;
     }
     if ($services_enabled[$service]) {
       $form['social_river_user_settings'][$service] = array(
@@ -134,7 +163,7 @@ function social_river_user_settings_form() {
 
   // Preview for social river forms.
   $preview = variable_get('social_river_preview', 0);
-  if (!empty($preview)) {
+  if (!empty($preview) && $has_services) {
     $block = module_invoke('social_river', 'block', 'view', 0);
     $form['preview'] = array(
       '#type' => 'fieldset',
@@ -143,6 +172,34 @@ function social_river_user_settings_form() {
     $form['preview']['preview_data'] = array(
       '#value' => $block['content'],
     );
+  }
+  return $form;
+}
+
+/**
+ * User settings form.
+ */
+function _social_river_block_settings_form($form, $delta) {
+  $form['#tree'] = TRUE;
+  $services = social_river_services();
+  $services_enabled = variable_get('social_river_services_enabled', array());
+  $form['social_river_block_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Services'),
+    '#description' => t('Provide usernames for each of the services that you wish to appear on this block.'),
+  );
+
+  // Print all available services for the block.
+  $block_services = _social_river_get_block_services($delta);
+  foreach ($services as $service => $data) {
+    if ($services_enabled[$service]) {
+      $form['social_river_block_settings'][$service] = array(
+        '#title' => $data['title'],
+        '#type' => 'textfield',
+        '#description' => $data['description'],
+        '#default_value' => !empty($block_services[$service]) ? $block_services[$service] : '',
+      );
+    }
   }
   return $form;
 }
@@ -289,6 +346,76 @@ function _social_river_get_river_code($uid) {
             })
             if(jQuery().timeago) {
               $('#social_river_" . $uid . " .timeago').timeago();
+            }
+          }
+        }
+      });
+
+    })();
+    </script>";
+    return $output;
+  }
+
+  return '';
+}
+
+/**
+ * Return code of a wall.
+ */
+function _social_river_get_river_block_code($delta) {
+  global $user;
+  $block_services = variable_get('social_river_block_'. $delta, array());
+  $output = '';
+
+  // Create js services list.
+  $js_service_list = array();
+  foreach ($block_services as $service => $value) {
+    if (!empty($service) && !empty($value)) {
+      $js_service_list[] = "{ service: '" . check_plain($service) . "', user: '" .
+        check_plain($value) . "' }";
+    }
+  }
+
+  if (!empty($js_service_list)) {
+    $output .= "<div id=\"social_river_block_" . $delta . "\">&nbsp;</div><script type=\"text/javascript\">
+    (function(){
+      var count = 0,
+      list = [  " . implode(",", $js_service_list) .  "  ];
+
+      Date.prototype.toISO8601 = function(date) {
+          var pad = function (amount, width) {
+              var padding = '';
+              while (padding.length < width - 1 && amount < Math.pow(10, width - padding.length - 1))
+                  padding += '0';
+              return padding + amount.toString();
+          }
+          date = date ? date : new Date();
+          var offset = date.getTimezoneOffset();
+          return pad(date.getFullYear(), 4)
+              + '-' + pad(date.getMonth() + 1, 2)
+              + '-' + pad(date.getDate(), 2)
+              + 'T' + pad(date.getHours(), 2)
+              + ':' + pad(date.getMinutes(), 2)
+              + ':' + pad(date.getUTCSeconds(), 2)
+              + (offset > 0 ? '-' : '+')
+              + pad(Math.floor(Math.abs(offset) / 60), 2)
+              + ':' + pad(Math.abs(offset) % 60, 2);
+        };
+
+      $('#social_river_block_" . $delta . "').lifestream({
+        limit: " . variable_get('social_river_feed_limit', 10) . ",
+        list: list,
+        feedloaded: function(){
+          count++;
+          // Check if all the feeds have been loaded
+          if( count === list.length ){
+            $('#social_river_block_" . $delta . " li').each(function(){
+              var element = $(this),
+                  date = new Date(element.data('time'));
+              element.append(' <abbr class=\"timeago\" title=\"' + date.toISO8601(date) + '\">' + date + \"</abbr>\");
+            })
+            if(jQuery().timeago) {
+              $('#social_river_block_" . $delta . " .timeago').timeago();
             }
           }
         }
@@ -563,7 +690,21 @@ function social_river_user($op, &$edit, &$user, $category = NULL) {
       );
   }
 }
-function social_river_user($op, &$edit, &$user, $category = NULL) {
+
+/**
+ * Configuration of the provided block
+ *
+ * @param $delta
+ *   block number
+ * @return
+ *   array with the block configuration or FALSE if no such block was found
+ */
+function _social_river_get_block_services($delta) {
+  if ($data = variable_get('social_river_block_'. $delta, array())) {
+    return $data;
+  }
+  return FALSE;
+}function social_river_user($op, &$edit, &$user, $category = NULL) {
  switch ($op) {
     case 'categories':
       return array(
