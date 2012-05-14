@@ -12,7 +12,7 @@
  */
 function social_river_perm() {
   return array('administer social river', 'view own social river', 'view all social rivers',
-               'set own social river settings',);
+               'set own social river settings', 'view custom social river blocks');
 }
 
 /**
@@ -363,6 +363,10 @@ function _social_river_get_river_code($uid) {
  * Return code of a wall.
  */
 function _social_river_get_river_block_code($delta) {
+  // Check to see if the user may view this stream.
+  if (!user_access('view custom social river blocks'))
+    return '';
+
   global $user;
   $block_services = variable_get('social_river_block_'. $delta, array());
   $output = '';
@@ -704,15 +708,4 @@ function _social_river_get_block_services($delta) {
     return $data;
   }
   return FALSE;
-}function social_river_user($op, &$edit, &$user, $category = NULL) {
- switch ($op) {
-    case 'categories':
-      return array(
-        array(
-          'name' => 'social_river',
-          'title' => t('Social River'),
-          'weight' => 3,
-        ),
-      );
-  }
 }
