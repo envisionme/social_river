@@ -62,7 +62,7 @@ function social_river_menu() {
       'title' => 'Autofill support JS',
       'page callback' => 'social_river_autofill_support',
       'type' => MENU_CALLBACK,
-      'access arguments' => array(TRUE),
+      'access arguments' => array('access content'),
     );
   }
   return $items;
