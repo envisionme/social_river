@@ -19,7 +19,6 @@ function social_river_perm() {
  * Implements hook_init().
  */
 function social_river_init() {
-  drupal_add_css(drupal_get_path('module', 'social_river') . '/css/lifestream.css');
   // Get the path for the the lifestream plugin.
   if ($path = libraries_get_path('jquery-lifestream')) {
     drupal_add_js($path . '/jquery.lifestream.js');
@@ -27,12 +26,16 @@ function social_river_init() {
   // Autofill module support.
   $path = drupal_get_path('module', 'social_river');
   if (module_exists('autofill')) {
-    drupal_add_js($path . '/js/autofill_support.js');
+    drupal_add_js($path . '/js/social_river_autofill.js');
   }
 
   if (module_exists('timeago')) {
     drupal_add_js(drupal_get_path('module', 'timeago') . '/jquery.timeago.js');
   }
+
+  $module_path = drupal_get_path('module', 'social_river');
+  drupal_add_css($module_path . '/css/lifestream.css');
+  drupal_add_js($module_path . '/js/social_river.js');
 }
 
 /**
@@ -54,17 +57,6 @@ function social_river_menu() {
     'access arguments' => array('administer social river'),
     'file' => 'social_river.admin.inc',
   );
-
-  // Autofill module support.
-  $path = drupal_get_path('module', 'social_river');
-  if (module_exists('autofill')) {
-    $items[$path . '/js/autofill_support.js'] = array(
-      'title' => 'Autofill support JS',
-      'page callback' => 'social_river_autofill_support',
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access content'),
-    );
-  }
   return $items;
 }
 
@@ -301,58 +293,24 @@ function _social_river_get_river_code($uid) {
   $js_service_list = array();
   foreach ($services as $service) {
     if (!empty($service['service_name']) && !empty($service['service_username'])) {
-      $js_service_list[] = "{ service: '" . check_plain(strtolower($service['service_name'])) . "', user: '" .
-        check_plain($service['service_username']) . "' }";
+      $js_service_list[] = array(
+        'service' => check_plain(strtolower($service['service_name'])),
+        'user' => $service['service_username']
+      );
     }
   }
 
   if (!empty($js_service_list)) {
-    $output .= "<div id=\"social_river_" . $uid . "\">&nbsp;</div><script type=\"text/javascript\">
-    (function(){
-      var count = 0,
-      list = [  " . implode(",", $js_service_list) .  "  ];
+    // Set settings for Social river feed.
+    $settings = array(
+      'social_river' => array(
+        'service_list' => $js_service_list,
+        'feed_limit' => variable_get('social_river_feed_limit', 10)
+    ));
+    drupal_add_js($settings, 'setting');
 
-      Date.prototype.toISO8601 = function(date) {
-          var pad = function (amount, width) {
-              var padding = '';
-              while (padding.length < width - 1 && amount < Math.pow(10, width - padding.length - 1))
-                  padding += '0';
-              return padding + amount.toString();
-          }
-          date = date ? date : new Date();
-          var offset = date.getTimezoneOffset();
-          return pad(date.getFullYear(), 4)
-              + '-' + pad(date.getMonth() + 1, 2)
-              + '-' + pad(date.getDate(), 2)
-              + 'T' + pad(date.getHours(), 2)
-              + ':' + pad(date.getMinutes(), 2)
-              + ':' + pad(date.getUTCSeconds(), 2)
-              + (offset > 0 ? '-' : '+')
-              + pad(Math.floor(Math.abs(offset) / 60), 2)
-              + ':' + pad(Math.abs(offset) % 60, 2);
-        };
+    $output .= '<div id="social_river"><span class="loading">Loading...</span></div>';
 
-      $('#social_river_" . $uid . "').lifestream({
-        limit: " . variable_get('social_river_feed_limit', 10) . ",
-        list: list,
-        feedloaded: function(){
-          count++;
-          // Check if all the feeds have been loaded
-          if( count === list.length ){
-            $('#social_river_" . $uid . " li').each(function(){
-              var element = $(this),
-                  date = new Date(element.data('time'));
-              element.append(' <abbr class=\"timeago\" title=\"' + date.toISO8601(date) + '\">' + date + \"</abbr>\");
-            })
-            if(jQuery().timeago) {
-              $('#social_river_" . $uid . " .timeago').timeago();
-            }
-          }
-        }
-      });
-
-    })();
-    </script>";
     return $output;
   }
 
@@ -650,34 +608,6 @@ function social_river_services() {
     'autofill' => 'Zotero username',
   );
   return $list;
-}
-
-/**
- * Generates js behaviours to allow for support of the autofill module
- */
-function social_river_autofill_support() {
-  $services_enabled = variable_get('social_river_services_enabled', array());
-  $default_color = check_plain(variable_get('autofill_colour_default', '#ccc'));
-  $active_color = check_plain(variable_get('autofill_colour_active', '#333'));
-
-  $output = 'Drupal.behaviors.social_river_autofill = function(context) {';
-
-  foreach ($services_enabled as $service => $data) {
-    $user_value = _social_river_get_user_service($service);
-    if(empty($user_value)) {
-      $output .= "\n" . '$("#edit-social-river-user-settings-' . $service . '").autofill({';
-      $output .= "\n\t" . 'value: "' . $data['autofill'] . '",';
-      $output .= "\n\t" . 'prePopulate: "",';
-      $output .= "\n\t" . 'defaultTextColor: "' . $default_color . '",';
-      $output .= "\n\t" . 'activeTextColor: "' . $active_color . '"';
-      $output .= "\n" . '});';
-    }
-  }
-  $output .= '}';
-
-  header('Content-type: text/javascript;');
-  echo $output;
-  exit();
 }
 
 /**
