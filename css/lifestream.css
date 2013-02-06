@@ -164,3 +164,9 @@ background-image: url(../icons/facebook-page.png);
 #edit-social-river-user-settings-zotero, .lifestream-zotero {
 background-image: url(../icons/zotero.png);
 }
+
+.timeago {
+  margin-left:10px;
+  color:#999;
+  border-width:0px;
+}
