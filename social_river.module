@@ -21,7 +21,7 @@ function social_river_perm() {
 function social_river_init() {
   // Get the path for the the lifestream plugin.
   if ($path = libraries_get_path('jquery-lifestream')) {
-    drupal_add_js($path . '/jquery.lifestream.js');
+    drupal_add_js($path . '/jquery.lifestream.min.js');
   }
   // Autofill module support.
   $path = drupal_get_path('module', 'social_river');
