@@ -7,11 +7,15 @@
 }
 
 .social-river-icon {
-	width:16px; height:16px; float:left; margin-right:5px;
+  width:16px; height:16px; float:left; margin-right:5px;
 }
 
 ul.lifestream li {
-	background-repeat:no-repeat; list-style-type:none;padding-left:25px; 
+  background-repeat:no-repeat; list-style-type:none;padding-left:25px; 
+  padding-bottom:5px;
+  margin-bottom:5px;
+  border-bottom:1px solid #f7f7f7;
+  
 }
 
 #social-river-user-settings-form input[type=text] {
@@ -165,7 +169,7 @@ background-image: url(../icons/facebook-page.png);
 background-image: url(../icons/zotero.png);
 }
 
-.timeago {
+abbr.timeago {
   margin-left:10px;
   color:#999;
   border-width:0px;
